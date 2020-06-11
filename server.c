@@ -1,75 +1,39 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
 #define DICT_LENGTH 370105
-#define ALPH_LENGTH 26
 
-int charToIndex(char c){
-	return (int)(c) - (int)('a'); 
+int min3(int a, int b, int c){
+	if(a < b){
+		if (a < c)
+			return a;
+		return c;
+	}
+	if(b < c)
+		return b;
+	return c;
 }
 
-// trie node
-struct trieNode{
-	struct trieNode *letters[ALPH_LENGTH];
-	// true if end of word
-	bool isEnd;
-};
-
-// create new tree node
-struct trieNode *getNode(){
-	struct trieNode * pNode = NULL;
-	pNode = (struct trieNode *)malloc(sizeof(struct trieNode));
-	
-	if(pNode){
-		int i;
-		pNode->isEnd = false;
-		for(i = 0; i < ALPH_LENGTH; i++){
-			pNode->letters[i] = NULL;
+int levenshtein(char *w1, char *w2) {
+	int x, y;
+	int len1 = strlen(w1);
+	int len2 = strlen(w2);
+	int mat[len2+1][len1+1];
+	mat[0][0] = 0;
+	for(x = 1; x <= len2; x++){
+		mat[x][0] = mat[x-1][0] + 1;
+	}
+	for(y = 1; y <= len1; y++){
+		mat[0][y] = mat[0][y-1] + 1;
+	}
+	for(x = 1; x <= len2; x++){
+		for(y = 1; y <= len1; y++){
+			mat[x][y] = min3(mat[x-1][y] + 1, mat[x][y-1] + 1, mat[x-1][y-1] + (w1[y-1] == w2[x-1] ? 0 : 1));
 		}
 	}
-	return pNode;
-}
-
-// insert key if not present, if prefix or node mark node
-void insert(struct trieNode *root, const char *key){
-	int level;
-	int length = strlen(key);
-	int index;
 	
-	struct trieNode *pCrawl = root;
-	
-	for (level = 0; level < length; level++){
-		index = charToIndex(key[level]);
-		if(!pCrawl->letters[index]){
-			pCrawl->letters[index] = getNode();
-		}
-		
-		pCrawl = pCrawl->letters[index];
-	}
-	
-	// mark last node as end
-	pCrawl->isEnd = true;
-}
-
-// returns true if key present in trie
-bool search(struct trieNode *root, const char *key){
-	int level;
-	int length = strlen(key);
-	int index;
-	
-	struct trieNode *pCrawl = root;
-	
-	for (level = 0; level < length; level++){
-		index = charToIndex(key[level]);
-		if(!pCrawl->letters[index]){
-			return false;
-		}
-		
-		pCrawl = pCrawl->letters[index];
-	}
-	return (pCrawl != NULL && pCrawl->isEnd);
+	return mat[len2][len1];
 }
 
 char keys[DICT_LENGTH][100];
@@ -85,13 +49,6 @@ int main(int argc, char ** argv){
 	}
 	fclose(dictionary);
 	
-	// build a trie
-	struct trieNode *root = getNode();
-	
-	for(i = 0; i < DICT_LENGTH; i++){
-		insert(root, keys[i]);
-	}
-	
 	// search for the word
 	bool correct = false;
 	for(int i = 0; i < DICT_LENGTH; i++){
@@ -102,7 +59,27 @@ int main(int argc, char ** argv){
 		}
 	}
 	if(!correct) {
-		printf("Incorrect, don't you mean...\n");
+		// build the levenshtein table
+		printf("Incorrect, calculating...\n");
+		int levenTable[DICT_LENGTH];
+		for(i = 0; i < DICT_LENGTH; i++){
+			levenTable[i] = levenshtein(argv[1], keys[i]);			
+		}
+		printf("a\n");
+		// find a potential correction
+		char* candidate;
+		int levMin = 100;
+		for(i = 0; i < DICT_LENGTH; i++){
+			if(levenTable[i] < levMin){
+				levMin = levenTable[i];
+				candidate = keys[i];
+			}
+		}
+		// display the candidate
+		if (levMin <= 3)
+			printf("Don't you mean %s?\n", candidate);
+		else
+			printf("This is certainly not a word.\n");
 	}
 	
 	
