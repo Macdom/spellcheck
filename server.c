@@ -74,10 +74,10 @@ bool search(struct trieNode *root, const char *key){
 
 char keys[DICT_LENGTH][100];
 
-int main(){
+int main(int argc, char ** argv){
+	// load the dictionary
 	FILE * dictionary;
 	dictionary = fopen("words.txt", "r");
-	
 	
 	int i;
 	for(i = 0; i < DICT_LENGTH; i++){
@@ -85,12 +85,24 @@ int main(){
 	}
 	fclose(dictionary);
 	
-	printf("%s\n", keys[12345]);
-	
+	// build a trie
 	struct trieNode *root = getNode();
 	
 	for(i = 0; i < DICT_LENGTH; i++){
 		insert(root, keys[i]);
+	}
+	
+	// search for the word
+	bool correct = false;
+	for(int i = 0; i < DICT_LENGTH; i++){
+		if (strcmp(argv[1], keys[i]) == 0){
+			correct = true;
+			printf("Correct\n");
+			break;
+		}
+	}
+	if(!correct) {
+		printf("Incorrect, don't you mean...\n");
 	}
 	
 	
