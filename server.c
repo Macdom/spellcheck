@@ -194,12 +194,11 @@ int main(int argc, char ** argv){
 		
 		// receive the word
 		int rbytes = 0;
-		char word[256];
-		if ((rbytes = read(sock, word, 255)) > 0){
+		char word[31];
+		if ((rbytes = read(newsock, word, 30)) > 0){
 			word[rbytes] = 0;
 		}
-		printf("Received word: %s", word);
-		
+		printf("Received word: %s\n", word);
 		// create response buffer
 		char responseBuffer [100];
 		

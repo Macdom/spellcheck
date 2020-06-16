@@ -86,8 +86,8 @@ int main(int argc, char ** argv){
 	
 	// receive the message
 	int rbytes = 0;
-	char responseBuffer[256];
-	if ((rbytes = read(sock, responseBuffer, 255)) > 0){
+	char responseBuffer[100];
+	if ((rbytes = read(sock, responseBuffer, 100)) > 0){
 		responseBuffer[rbytes] = 0;
 		printf("%s", responseBuffer);
 	}
