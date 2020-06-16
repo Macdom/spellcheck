@@ -192,21 +192,29 @@ int main(int argc, char ** argv){
 			printf("Client accepted, responding\n");
 		}
 		
-		// create buffer
-		char buffer [100];
+		// receive the word
+		int rbytes = 0;
+		char word[256];
+		if ((rbytes = read(sock, word, 255)) > 0){
+			word[rbytes] = 0;
+		}
+		printf("Received word: %s", word);
+		
+		// create response buffer
+		char responseBuffer [100];
 		
 		// process the word
-		char word[30] = "somethinb";
+		//char word[30] = "somethinb";
 		bool correct = wordSearch(word, wordsTable);
 		if(correct)
-			sprintf(buffer, "Correct\n");
+			sprintf(responseBuffer, "Correct\n");
 		else{
-			findCandidate(word, buffer, wordsTable);
+			findCandidate(word, responseBuffer, wordsTable);
 		}
 		
 		// send response to client and close socket
 		printf("Sending response...\n");
-		write(newsock, buffer, strlen(buffer) + 1);
+		write(newsock, responseBuffer, strlen(responseBuffer) + 1);
 		printf("Response sent.\n");
 		close(newsock);
 	}
