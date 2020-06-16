@@ -79,12 +79,17 @@ int main(int argc, char ** argv){
 
 	int sock = prepareAndOpenSocket(PORT);
 	
+	// send the word
+	char word[30] = "something";
+	write(sock, word, strlen(word) + 1);
+	printf("Sent word: %s, waiting for response\n", word);
+	
 	// receive the message
 	int rbytes = 0;
-	char buffer[256];
-	if ((rbytes = read(sock, buffer, 255)) > 0){
-		buffer[rbytes] = 0;
-		printf("%s", buffer);
+	char responseBuffer[100];
+	if ((rbytes = read(sock, responseBuffer, 100)) > 0){
+		responseBuffer[rbytes] = 0;
+		printf("%s", responseBuffer);
 	}
 	printf("\n");
 	
