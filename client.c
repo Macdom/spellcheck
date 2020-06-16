@@ -12,11 +12,11 @@ int prepareAndOpenSocket(char* name){
 	
 	struct sockaddr_un servinfo;
 	int sock = socket(PF_UNIX, SOCK_STREAM, 0);
-	if(sock != 0){
-		printf("%d\n", sock);
+	/*if(sock != 0){
+		printf("%s\n", strerror(sock));
 		perror ("Couldn't open socket");
 		exit(1);
-	}
+	}*/
 	
 	memset(&servinfo, 0, sizeof(struct sockaddr_un));
 	servinfo.sun_family = AF_UNIX;
