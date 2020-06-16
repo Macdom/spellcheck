@@ -67,20 +67,22 @@ int prepareAndOpenSocket(char PORT[]){
 
 int main(int argc, char ** argv){
 	
-	// resolve the port number
-	char PORT[4];
-	if (argc != 2){
-		printf("Wrong number of arguments, only port needed\n");
+	char PORT[4], word[30];
+	// check argument count
+	if (argc != 3){
+		printf("Usage: ./client port word\n");
 		exit(-1);
 	}
 	else{
+		// resolve port number
 		strcpy(PORT, argv[1]);
+		// read the word to spellcheck
+		strcpy(word, argv[2]);
 	}
 
 	int sock = prepareAndOpenSocket(PORT);
 	
 	// send the word
-	char word[30] = "something";
 	write(sock, word, strlen(word) + 1);
 	printf("Sent word: %s, waiting for response\n", word);
 	
