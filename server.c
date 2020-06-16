@@ -203,7 +203,6 @@ int main(int argc, char ** argv){
 		char responseBuffer [100];
 		
 		// process the word
-		//char word[30] = "somethinb";
 		bool correct = wordSearch(word, wordsTable);
 		if(correct)
 			sprintf(responseBuffer, "Correct\n");
