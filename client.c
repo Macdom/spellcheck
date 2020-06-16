@@ -28,7 +28,7 @@ int prepareAndOpenSocket(char PORT[]){
 	struct addrinfo addrSetup;
 	memset(&addrSetup, 0, sizeof(addrSetup));
 	addrSetup.ai_flags    = AI_PASSIVE;
-	addrSetup.ai_family   = AF_UNIX;
+	addrSetup.ai_family   = AF_INET;
 	addrSetup.ai_socktype = SOCK_STREAM;
 	
 	struct addrinfo *servinfo;
