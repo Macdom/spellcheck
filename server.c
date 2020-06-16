@@ -3,10 +3,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -47,7 +43,7 @@ int levenshtein(char *w1, char *w2) {
 
 // address printer
 void praddr(struct addrinfo* info){
-	printf(". FAMILY: %s ", (info->ai_family == AF_INET ? "IP4" : "IP6"));
+	printf("FAMILY: %s ", (info->ai_family == AF_INET ? "IP4" : "IP6"));
 	void * addr;
 	if(info->ai_family == AF_INET) { //IPv4
 		struct sockaddr_in *ip = (struct sockaddr_in *)info->ai_addr;
@@ -62,30 +58,18 @@ void praddr(struct addrinfo* info){
 	printf(" %s\n", human_address);
 }
 
-char wordsTable[DICT_LENGTH][100];
-
-int main(int argc, char ** argv){
-	
-	// resolve the port number
-	char PORT[4];
-	if (argc != 2){
-		printf("Wrong number of arguments, only port needed\n");
-		exit(-1);
-	}
-	else{
-		strcpy(PORT, argv[1]);
-	}
-	
-	// load the dictionary
-	FILE * dictionary;
-	dictionary = fopen("words.txt", "r");
+void loadFileToArray(char* name, char array[DICT_LENGTH][100]){
+	FILE * f;
+	f = fopen(name, "r");
 	
 	int i;
 	for(i = 0; i < DICT_LENGTH; i++){
-		fscanf(dictionary, "%s\n", wordsTable[i]);
+		fscanf(f, "%s\n", array[i]);
 	}
-	fclose(dictionary);
-	
+	fclose(f);
+}
+
+struct addrinfo* prepareSocket(char PORT[]){
 	// prepare the socket
 	struct addrinfo 	  addrSetup;
 	memset(&addrSetup, 0, sizeof(addrSetup));
@@ -104,7 +88,10 @@ int main(int argc, char ** argv){
 	
 	// if it succeeds, print the address
 	praddr(servinfo);
-	
+	return servinfo;
+}
+
+int openSocket(struct addrinfo* servinfo){
 	// open the socket
 	printf("Opening socket\n");
 	int sock = socket(servinfo->ai_family,
@@ -116,6 +103,69 @@ int main(int argc, char ** argv){
 		exit(2);
 	}
 	printf("Socket open\n");
+	return sock;
+}
+
+bool wordSearch(char* word, char array[DICT_LENGTH][100]){
+	for(int i = 0; i < DICT_LENGTH; i++){
+		if (strcmp(word, array[i]) == 0){
+			return true;
+		}
+	}
+	return false;
+}
+
+void findCandidate(char* word, char* buffer, char array[DICT_LENGTH][100]){
+	// build the levenshtein table
+	sprintf(buffer, "Incorrect, calculating...\n");
+	int levenTable[DICT_LENGTH];
+	int i;
+	for(i = 0; i < DICT_LENGTH; i++){
+		levenTable[i] = levenshtein(word, array[i]);			
+	}
+	// find a potential correction
+	char* candidate;
+	int levMin = 100;
+	for(i = 0; i < DICT_LENGTH; i++){
+		if(levenTable[i] < levMin){
+			levMin = levenTable[i];
+			candidate = array[i];
+		}
+	}
+	// display the candidate
+	if (levMin <= 3){
+		char cand [100];
+		sprintf(cand, "Don't you mean %s?\n", candidate);
+		strcat(buffer, cand);
+	}	
+	else{
+		strcat(buffer, "This is certainly not a word.\n");
+	}
+}
+
+
+// create on heap to avoid stack overflow
+char wordsTable[DICT_LENGTH][100];
+
+int main(int argc, char ** argv){
+	
+	// resolve the port number
+	char PORT[4];
+	if (argc != 2){
+		printf("Wrong number of arguments, only port needed\n");
+		exit(-1);
+	}
+	else{
+		strcpy(PORT, argv[1]);
+	}
+	
+	// load the dictionary
+	loadFileToArray("words.txt", wordsTable);
+
+	
+	// prepare and open socket
+	struct addrinfo* servinfo = prepareSocket(PORT);
+	int sock = openSocket(servinfo);
 	
 	// bind socket to port
 	if (bind(sock, servinfo->ai_addr, servinfo->ai_addrlen) == -1){
@@ -139,51 +189,25 @@ int main(int argc, char ** argv){
 			perror("Error while accepting client");
 		}
 		else{
-			printf(". Client accepted, responding\n");
+			printf("Client accepted, responding\n");
 		}
 		
 		// create buffer
 		char buffer [100];
 		
-		// search for the word
-		bool correct = false;
-		char word[30] = "gnaoigniewgnoew";
-		for(int i = 0; i < DICT_LENGTH; i++){
-			if (strcmp(word, wordsTable[i]) == 0){
-				correct = true;
-				sprintf(buffer, "Correct\n");
-				break;
-			}
-		}
-		if(!correct) {
-			// build the levenshtein table
-			sprintf(buffer, "Incorrect, calculating...\n");
-			int levenTable[DICT_LENGTH];
-			for(i = 0; i < DICT_LENGTH; i++){
-				levenTable[i] = levenshtein(word, wordsTable[i]);			
-			}
-			// find a potential correction
-			char* candidate;
-			int levMin = 100;
-			for(i = 0; i < DICT_LENGTH; i++){
-				if(levenTable[i] < levMin){
-					levMin = levenTable[i];
-					candidate = wordsTable[i];
-				}
-			}
-			// display the candidate
-			if (levMin <= 3){
-				char cand [100];
-				sprintf(cand, "Don't you mean %s?\n", candidate);
-				strcat(buffer, cand);
-			}	
-			else
-				strcat(buffer, "This is certainly not a word.\n");
+		// process the word
+		char word[30] = "somethinb";
+		bool correct = wordSearch(word, wordsTable);
+		if(correct)
+			sprintf(buffer, "Correct\n");
+		else{
+			findCandidate(word, buffer, wordsTable);
 		}
 		
 		// send response to client and close socket
 		printf("Sending response...\n");
 		write(newsock, buffer, strlen(buffer) + 1);
+		printf("Response sent.\n");
 		close(newsock);
 	}
 	return 0;

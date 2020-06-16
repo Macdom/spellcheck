@@ -1,12 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 #include <stdlib.h>
 
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -28,23 +23,12 @@ void praddr(struct addrinfo* info){
 	printf(" %s\n", human_address);
 }
 
-int main(int argc, char ** argv){
-	
-	// resolve the port number
-	char PORT[4];
-	if (argc != 2){
-		printf("Wrong number of arguments, only port needed\n");
-		exit(-1);
-	}
-	else{
-		strcpy(PORT, argv[1]);
-	}
-
+int prepareAndOpenSocket(char PORT[]){
 	// prepare the socket
 	struct addrinfo addrSetup;
 	memset(&addrSetup, 0, sizeof(addrSetup));
 	addrSetup.ai_flags    = AI_PASSIVE;
-	addrSetup.ai_family   = AF_INET;
+	addrSetup.ai_family   = AF_UNIX;
 	addrSetup.ai_socktype = SOCK_STREAM;
 	
 	struct addrinfo *servinfo;
@@ -76,7 +60,24 @@ int main(int argc, char ** argv){
 		perror("Failed to connect");
 		exit(3);
 	}
+	
+	return sock;
 	printf("Connected\n");
+}
+
+int main(int argc, char ** argv){
+	
+	// resolve the port number
+	char PORT[4];
+	if (argc != 2){
+		printf("Wrong number of arguments, only port needed\n");
+		exit(-1);
+	}
+	else{
+		strcpy(PORT, argv[1]);
+	}
+
+	int sock = prepareAndOpenSocket(PORT);
 	
 	// receive the message
 	int rbytes = 0;
