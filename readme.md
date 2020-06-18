@@ -1,3 +1,6 @@
-C spellcheck service with UNIX sockets.
+C spellcheck service.
 
-More info in PDF file that I will eventually provide.
+Usage: ./client word
+Used: UNIX sockets and Levenshtein's algorithm.
+
+Check PDF file for more info.
